@@ -25,10 +25,10 @@ class MimirMixin:
         Returns:
             Dictionary with metric series and values
         """
-        if not self.read_token:
+        if not self.is_configured:
             return {
                 "success": False,
-                "error": f"Read token not configured for account '{self.account_id}'",
+                "error": f"Grafana client not configured for account '{self.account_id}'",
                 "metrics": [],
             }
 

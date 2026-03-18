@@ -46,4 +46,6 @@ This is the lowest-friction Grafana example. It does not require a live Grafana 
 
 For the generic local RCA example, see [local-rca-demo.md](local-rca-demo.md).
 
+For a live local Grafana stack instead of bundled evidence, see [local-grafana-live.md](local-grafana-live.md).
+
 For the full local development flow, see [SETUP.md](../SETUP.md).

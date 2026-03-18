@@ -28,10 +28,10 @@ class LokiMixin:
         Returns:
             Dictionary with log streams and metadata
         """
-        if not self.read_token:
+        if not self.is_configured:
             return {
                 "success": False,
-                "error": f"Read token not configured for account '{self.account_id}'",
+                "error": f"Grafana client not configured for account '{self.account_id}'",
                 "logs": [],
             }
 

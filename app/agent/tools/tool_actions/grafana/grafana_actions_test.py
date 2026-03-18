@@ -55,6 +55,32 @@ def test_query_grafana_logs_not_configured():
     assert "not configured" in result["error"]
 
 
+def test_query_grafana_logs_allows_local_anonymous_grafana():
+    """Test query_grafana_logs can use localhost Grafana without a token."""
+    mock_instance = _create_mock_client()
+    mock_instance.query_loki.return_value = {
+        "success": True,
+        "logs": [{"timestamp": "123", "message": "test log", "labels": {}}],
+        "total_logs": 1,
+    }
+
+    with patch(
+        "app.agent.tools.tool_actions.grafana.grafana_actions.get_grafana_client_from_credentials",
+        return_value=mock_instance,
+    ) as mocked_factory:
+        result = query_grafana_logs(
+            "prefect-etl-pipeline-local",
+            grafana_endpoint="http://localhost:3000",
+            grafana_api_key="",
+        )
+
+    mocked_factory.assert_called_once_with(
+        endpoint="http://localhost:3000",
+        api_key="",
+    )
+    assert result["available"] is True
+
+
 def test_query_grafana_logs_failure():
     """Test query_grafana_logs handles query failures gracefully."""
     mock_instance = _create_mock_client()

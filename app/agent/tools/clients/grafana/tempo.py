@@ -27,10 +27,10 @@ class TempoMixin:
         Returns:
             Dictionary with traces and span details
         """
-        if not self.read_token:
+        if not self.is_configured:
             return {
                 "success": False,
-                "error": f"Read token not configured for account '{self.account_id}'",
+                "error": f"Grafana client not configured for account '{self.account_id}'",
                 "traces": [],
             }
 

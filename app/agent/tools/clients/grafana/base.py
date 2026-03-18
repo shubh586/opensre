@@ -53,6 +53,7 @@ class GrafanaClientBase:
         self.loki_datasource_uid = config.loki_datasource_uid
         self.tempo_datasource_uid = config.tempo_datasource_uid
         self.mimir_datasource_uid = config.mimir_datasource_uid
+        self.uses_local_anonymous_auth = config.uses_local_anonymous_auth
 
     @property
     def is_configured(self) -> bool:
@@ -149,7 +150,7 @@ class GrafanaClientBase:
         Returns:
             Dict with keys loki_uid, tempo_uid, mimir_uid (only present if found).
         """
-        if not self.instance_url or not self.read_token:
+        if not self.instance_url or not self.is_configured:
             return {}
 
         url = f"{self.instance_url}/api/datasources"
@@ -287,6 +288,8 @@ class GrafanaClientBase:
             return []
 
     def _get_auth_headers(self) -> dict[str, str]:
+        if not self.read_token:
+            return {}
         return {"Authorization": f"Bearer {self.read_token}"}
 
     def _make_request(

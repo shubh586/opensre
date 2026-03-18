@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,12 @@ class GrafanaAccountConfig:
     description: str = ""
 
     @property
+    def uses_local_anonymous_auth(self) -> bool:
+        """Allow localhost Grafana to work without a bearer token."""
+        host = urlparse(self.instance_url).hostname or ""
+        return bool(self.instance_url and not self.read_token and host in {"localhost", "127.0.0.1", "0.0.0.0"})
+
+    @property
     def is_configured(self) -> bool:
         """Check if account has valid configuration."""
-        return bool(self.instance_url and self.read_token)
+        return bool(self.instance_url and (self.read_token or self.uses_local_anonymous_auth))

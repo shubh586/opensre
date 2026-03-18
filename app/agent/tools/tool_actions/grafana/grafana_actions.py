@@ -24,11 +24,11 @@ def _resolve_grafana_client(
     grafana_api_key: str | None = None,
 ):
     """Resolve the Grafana client from integration credentials."""
-    if not grafana_endpoint or not grafana_api_key:
+    if not grafana_endpoint:
         return None
     return get_grafana_client_from_credentials(
         endpoint=grafana_endpoint,
-        api_key=grafana_api_key,
+        api_key=grafana_api_key or "",
     )
 
 

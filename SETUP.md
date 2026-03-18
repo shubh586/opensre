@@ -53,6 +53,8 @@ If you want the generic bundled RCA example instead, run:
 make local-rca-demo
 ```
 
+If you want the same experience against a real local Grafana stack, see [docs/local-grafana-live.md](docs/local-grafana-live.md).
+
 ## 2. Full local development setup
 
 Use this path when you want to run the agent locally with your Tracer account and your own integrations.
