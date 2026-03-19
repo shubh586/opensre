@@ -2,7 +2,7 @@
 
 This guide covers two local paths:
 
-- A bundled local RCA demo with the least setup friction
+- A live local Grafana RCA demo
 - The full local development flow with your Tracer account
 
 ## Prerequisites
@@ -10,9 +10,13 @@ This guide covers two local paths:
 - Python 3.11+
 - `make`
 
-## 1. Fastest path: bundled local Grafana RCA demo
+## 1. Fastest path: live local Grafana RCA demo
 
-If you want to see a minimal Grafana-style RCA report locally as quickly as possible, start here.
+If you want to see a minimal RCA report against a real local Grafana stack, start here.
+
+- Docker
+- Python 3.11+
+- `make`
 
 1. Install dependencies:
 
@@ -39,21 +43,31 @@ If you want to see a minimal Grafana-style RCA report locally as quickly as poss
    OPENAI_API_KEY=your-openai-api-key
    ```
 
-4. Run the bundled Grafana RCA example:
+4. Start the local Grafana stack:
 
    ```bash
-   make local-grafana-demo
+   make grafana-local-up
    ```
 
-This path uses bundled Grafana-style alert and evidence data. It does not require a Tracer account or real Grafana, Slack, Datadog, or AWS credentials.
+5. Run the live local Grafana RCA example:
 
-If you want the generic bundled RCA example instead, run:
+   ```bash
+   make local-grafana-live
+   ```
+
+This path uses a real local `Grafana + Loki` stack and real local Grafana queries. It still uses a synthetic alert payload and does not require a Tracer account or real Slack, Datadog, or AWS credentials.
+
+When you are done, stop the stack:
+
+```bash
+make grafana-local-down
+```
+
+If you want a generic no-Docker bundled RCA example instead, run:
 
 ```bash
 make local-rca-demo
 ```
-
-If you want the same experience against a real local Grafana stack, see [docs/local-grafana-live.md](docs/local-grafana-live.md).
 
 ## 2. Full local development setup
 

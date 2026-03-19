@@ -15,7 +15,6 @@ from app.agent.nodes.publish_findings.node import generate_report  # noqa: E402
 from app.agent.nodes.root_cause_diagnosis.node import diagnose_root_cause  # noqa: E402
 from app.agent.state import InvestigationState, make_initial_state  # noqa: E402
 from app.agent.tools.tool_actions.grafana.grafana_actions import query_grafana_logs  # noqa: E402
-from app.demo.local_grafana_rca import build_problem_md  # noqa: E402
 from app.demo.local_grafana_seed import PIPELINE_NAME, SERVICE_NAME  # noqa: E402
 from app.demo.local_rca import require_llm_config  # noqa: E402
 
@@ -91,6 +90,19 @@ def build_synthetic_alert() -> dict[str, Any]:
             "The events_fact pipeline stopped updating after an authentication failure."
         ),
     }
+
+
+def build_problem_md(
+    *,
+    alert_name: str,
+    pipeline_name: str,
+    severity: str,
+    error_message: str,
+) -> str:
+    parts = [f"# {alert_name}", f"Pipeline: {pipeline_name} | Severity: {severity}"]
+    if error_message:
+        parts.append(f"\nError: {error_message}")
+    return "\n".join(parts)
 
 
 def prepare_demo_state(evidence: dict[str, Any]) -> InvestigationState:

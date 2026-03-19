@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: install test test-full demo local-rca-demo local-grafana-demo check-docker grafana-local-up grafana-local-down grafana-local-seed local-grafana-live clean lint format deploy deploy-lambda deploy-prefect deploy-flink destroy destroy-lambda destroy-prefect destroy-flink prefect-local-test simulate-k8s-alert test-k8s-local test-k8s test-k8s-datadog deploy-dd-monitors cleanup-dd-monitors deploy-eks destroy-eks test-k8s-eks datadog-demo crashloop-demo regen-trigger-config test-rca
+.PHONY: install test test-full demo local-rca-demo check-docker grafana-local-up grafana-local-down grafana-local-seed local-grafana-live clean lint format deploy deploy-lambda deploy-prefect deploy-flink destroy destroy-lambda destroy-prefect destroy-flink prefect-local-test simulate-k8s-alert test-k8s-local test-k8s test-k8s-datadog deploy-dd-monitors cleanup-dd-monitors deploy-eks destroy-eks test-k8s-eks datadog-demo crashloop-demo regen-trigger-config test-rca
 
 PYTHON = python3
 PIP = python3 -m pip
@@ -22,10 +22,6 @@ demo:
 # Run bundled local RCA example with sample alert and evidence
 local-rca-demo:
 	$(PYTHON) -m app.demo.local_rca
-
-# Run bundled local Grafana RCA example with sample alert and evidence
-local-grafana-demo:
-	$(PYTHON) -m app.demo.local_grafana_rca
 
 check-docker:
 	@command -v docker >/dev/null 2>&1 || { echo "Docker is required for the live local Grafana stack. Install Docker Desktop or another Docker-compatible runtime, then rerun this target."; exit 1; }
@@ -245,11 +241,10 @@ help:
 	@echo ""
 	@echo "  DEMOS"
 	@echo "  make demo            - Run Prefect ECS E2E test (default, shows Investigation Trace)"
-	@echo "  make local-grafana-demo - Run the bundled local Grafana RCA example"
 	@echo "  make grafana-local-up - Start the local Grafana + Loki stack"
 	@echo "  make grafana-local-seed - Seed failure logs into the local Loki instance"
 	@echo "  make local-grafana-live - Run RCA against the live local Grafana stack"
-	@echo "  make local-rca-demo  - Run the bundled local RCA example (no Tracer account required)"
+	@echo "  make local-rca-demo  - Run the generic bundled local RCA example (no Docker or Tracer account required)"
 	@echo "  make prefect-demo    - Run Prefect ECS Fargate E2E test (alias for demo)"
 	@echo "  make prefect-local-test - Run Prefect ECS local test (CLOUD=1 for ECS)"
 	@echo "  make flink-demo      - Run Apache Flink ECS E2E test"

@@ -28,12 +28,13 @@ cd open-sre-agent
 make install
 cp .env.example .env
 # set ANTHROPIC_API_KEY or OPENAI_API_KEY in .env
-make local-grafana-demo
+make grafana-local-up
+make local-grafana-live
 ```
 
-Want the fastest Grafana-first path to a first RCA report? Start with [docs/local-grafana-demo.md](docs/local-grafana-demo.md).
+Want the live local Grafana path to a first RCA report? Start with [docs/local-grafana-live.md](docs/local-grafana-live.md).
 
-Want the generic bundled RCA example instead? See [docs/local-rca-demo.md](docs/local-rca-demo.md).
+Want a generic no-Docker bundled RCA example instead? See [docs/local-rca-demo.md](docs/local-rca-demo.md).
 
 Want to run the LangGraph dev UI or connect your own systems? See [SETUP.md](SETUP.md).
 
