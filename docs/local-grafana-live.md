@@ -2,6 +2,8 @@
 
 This path runs Tracer against a real local Grafana instance instead of bundled Grafana evidence.
 
+![Live local Grafana flow](assets/local-grafana-live-flow.gif)
+
 Level 1 scope:
 
 - real local `Grafana`

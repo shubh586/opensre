@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import time
-from typing import Any
+from typing import Any, cast
 
 import requests
 from dotenv import load_dotenv
@@ -15,7 +15,6 @@ from app.agent.nodes.publish_findings.node import generate_report  # noqa: E402
 from app.agent.nodes.root_cause_diagnosis.node import diagnose_root_cause  # noqa: E402
 from app.agent.state import InvestigationState, make_initial_state  # noqa: E402
 from app.agent.tools.tool_actions.grafana.grafana_actions import query_grafana_logs  # noqa: E402
-from app.demo.local_grafana_rca import build_problem_md  # noqa: E402
 from app.demo.local_grafana_seed import PIPELINE_NAME, SERVICE_NAME  # noqa: E402
 from app.demo.local_rca import require_llm_config  # noqa: E402
 
@@ -93,6 +92,19 @@ def build_synthetic_alert() -> dict[str, Any]:
     }
 
 
+def build_problem_md(
+    *,
+    alert_name: str,
+    pipeline_name: str,
+    severity: str,
+    error_message: str,
+) -> str:
+    parts = [f"# {alert_name}", f"Pipeline: {pipeline_name} | Severity: {severity}"]
+    if error_message:
+        parts.append(f"\nError: {error_message}")
+    return "\n".join(parts)
+
+
 def prepare_demo_state(evidence: dict[str, Any]) -> InvestigationState:
     alert = build_synthetic_alert()
     state = make_initial_state(
@@ -123,10 +135,10 @@ def run_demo(argv: list[str] | None = None) -> str:
     evidence = fetch_live_grafana_evidence()
     state = prepare_demo_state(evidence)
 
-    diagnosis = diagnose_root_cause(state)
+    diagnosis = cast(InvestigationState, diagnose_root_cause(state))
     state.update(diagnosis)
 
-    report = generate_report(state)["slack_message"]
+    report = str(generate_report(state)["slack_message"])
     if args.output:
         from pathlib import Path
 
