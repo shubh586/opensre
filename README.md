@@ -190,6 +190,13 @@ Thanks goes to these amazing people:
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/anandgupta1202">
+                    <img src="https://avatars.githubusercontent.com/u/39819996?v=4" width="100;" alt="anandgupta1202"/>
+                    <br />
+                    <sub><b>Anand Gupta</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/iamkalio">
                     <img src="https://avatars.githubusercontent.com/u/89003403?v=4" width="100;" alt="iamkalio"/>
                     <br />
