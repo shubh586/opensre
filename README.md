@@ -805,6 +805,13 @@ Thanks goes to these amazing people:
             <sub><b>imjohnzakkam</b></sub>
         </a>
     </td>
+            <td align="center">
+        <a href="https://github.com/paarths-collab">
+            <img src="https://avatars.githubusercontent.com/u/205314222?v=4" width="100" alt="paarths-collab"/>
+            <br />
+            <sub><b>paarths-collab</b></sub>
+        </a>
+    </td>
 		</tr>
 	</tbody>
 </table>
