@@ -32,8 +32,7 @@
         "group": "Getting started",
         "pages": [
           "quickstart",
-          "faq",
-          "development"
+          "faq"
         ]
       },
       {
