@@ -3,62 +3,54 @@ title: "Quickstart"
 slug: "quickstart"
 ---
 
-### Install
+### Quickstart
 
-Choose your platform:
+<Steps>
+  <Step title="Install OpenSRE">
+    <Tabs>
+      <Tab title="macOS / Linux">
+        Choose one install method:
 
-The same `https://install.opensre.com` URL auto-detects Unix shell vs PowerShell. Use `--main` when you want the latest rolling build from `main` instead of the latest stable release.
+        ```bash
+        brew install Tracer-Cloud/opensre/opensre
+        ```
 
-**macOS (Homebrew)**
+        ```bash
+        curl -fsSL https://raw.githubusercontent.com/Tracer-Cloud/opensre/main/install.sh | bash
+        ```
+      </Tab>
+      <Tab title="Windows">
+        ```powershell
+        irm https://raw.githubusercontent.com/Tracer-Cloud/opensre/main/install.ps1 | iex
+        ```
+      </Tab>
+    </Tabs>
 
-```bash
-brew install Tracer-Cloud/opensre/opensre
-```
+  </Step>
 
-**Linux / macOS (curl)**
+  <Step title="Onboard">
+    Run the onboarding wizard to configure your LLM provider and connect your integrations (Grafana, Datadog, Honeycomb, Coralogix, Slack, AWS, GitHub MCP, Sentry):
 
-```bash
-curl -fsSL https://install.opensre.com | bash
-```
+    ```bash
+    opensre onboard
+    ```
 
-**Linux / macOS (curl, rolling `main` build)**
+  </Step>
 
-```bash
-curl -fsSL https://install.opensre.com | bash -s -- --main
-```
+  <Step title="Run your first investigation">
+    Trigger an investigation by passing in an alert file:
 
-**Windows (PowerShell)**
+    ```bash
+    opensre investigate -i tests/e2e/kubernetes/fixtures/datadog_k8s_alert.json
+    ```
 
-```powershell
-irm https://install.opensre.com | iex
-```
+    OpenSRE automatically fetches alert context, reasons across connected systems, and generates a structured root-cause report.
 
----
+  </Step>
 
-### Onboard
-
-Run the onboarding wizard to configure your LLM provider and connect your integrations (Grafana, Datadog, Honeycomb, Coralogix, Slack, AWS, GitHub MCP, Sentry):
-
-```bash
-opensre onboard
-```
-
----
-
-### Run Your First Investigation
-
-Trigger an investigation by passing in an alert file:
-
-```bash
-opensre investigate -i tests/e2e/kubernetes/fixtures/datadog_k8s_alert.json
-```
-
-OpenSRE will automatically fetch alert context, reason across your connected systems, and generate a structured root-cause report — optionally posting a summary to Slack or PagerDuty.
-
----
-
-### Keep Up to Date
-
-```bash
-opensre update
-```
+  <Step title="Keep up to date">
+    ```bash
+    opensre update
+    ```
+  </Step>
+</Steps>
