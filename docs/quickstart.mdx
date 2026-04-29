@@ -7,6 +7,8 @@ slug: "quickstart"
 
 Choose your platform:
 
+The same `https://install.opensre.com` URL auto-detects Unix shell vs PowerShell. Use `--main` when you want the latest rolling build from `main` instead of the latest stable release.
+
 **macOS (Homebrew)**
 
 ```bash
@@ -16,13 +18,19 @@ brew install Tracer-Cloud/opensre/opensre
 **Linux / macOS (curl)**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Tracer-Cloud/opensre/main/install.sh | bash
+curl -fsSL https://install.opensre.com | bash
+```
+
+**Linux / macOS (curl, rolling `main` build)**
+
+```bash
+curl -fsSL https://install.opensre.com | bash -s -- --main
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-irm https://raw.githubusercontent.com/Tracer-Cloud/opensre/main/install.ps1 | iex
+irm https://install.opensre.com | iex
 ```
 
 ---

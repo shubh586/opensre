@@ -89,8 +89,18 @@ Our mission is to build AI SRE agents on top of this, scale it to thousands of r
 
 ## Install
 
+The root installer URL auto-detects Unix shell vs PowerShell. Add `--main` when you want the latest rolling build from `main` instead of the latest stable release.
+
+Latest stable release:
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Tracer-Cloud/opensre/main/install.sh | bash
+curl -fsSL https://install.opensre.com | bash
+```
+
+Latest build from `main`:
+
+```bash
+curl -fsSL https://install.opensre.com | bash -s -- --main
 ```
 
 ```bash
@@ -98,7 +108,7 @@ brew install Tracer-Cloud/opensre/opensre
 ```
 
 ```powershell
-irm https://raw.githubusercontent.com/Tracer-Cloud/opensre/main/install.ps1 | iex
+irm https://install.opensre.com | iex
 ```
 
 <!--
