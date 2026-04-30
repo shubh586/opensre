@@ -1081,6 +1081,13 @@ Thanks goes to these amazing people:
             <sub><b>Aaryan-549</b></sub>
         </a>
     </td>
+            <td align="center">
+        <a href="https://github.com/CoderHariswar">
+            <img src="https://avatars.githubusercontent.com/u/113418253?v=4" width="100" alt="CoderHariswar"/>
+            <br />
+            <sub><b>CoderHariswar</b></sub>
+        </a>
+    </td>
 		</tr>
 	</tbody>
 </table>
