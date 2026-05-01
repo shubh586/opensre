@@ -42,6 +42,10 @@
         "icon": "download",
         "groups": [
           {
+            "group": "Overview",
+            "pages": ["install"]
+          },
+          {
             "group": "Local",
             "pages": ["install-local"]
           },
