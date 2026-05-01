@@ -4,9 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from collections.abc import Iterable
 
 from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import CompleteEvent, Completer, Completion
+from prompt_toolkit.document import Document
+from prompt_toolkit.filters import has_completions
 from prompt_toolkit.formatted_text import ANSI
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.markup import escape
 
@@ -14,11 +20,82 @@ from app.cli.interactive_shell.agent_actions import execute_cli_actions
 from app.cli.interactive_shell.banner import render_banner
 from app.cli.interactive_shell.cli_agent import answer_cli_agent
 from app.cli.interactive_shell.cli_help import answer_cli_help
-from app.cli.interactive_shell.commands import dispatch_slash
+from app.cli.interactive_shell.commands import SLASH_COMMANDS, dispatch_slash
 from app.cli.interactive_shell.config import ReplConfig
 from app.cli.interactive_shell.follow_up import answer_follow_up
+from app.cli.interactive_shell.history import load_prompt_history
 from app.cli.interactive_shell.router import classify_input
 from app.cli.interactive_shell.session import ReplSession
+from app.cli.interactive_shell.theme import (
+    ANSI_RESET,
+    OPENCLAW_AMBER,
+    OPENCLAW_ORANGE,
+    PROMPT_ACCENT_ANSI,
+)
+
+
+class SlashCommandCompleter(Completer):
+    """Show slash-command previews as soon as the user types `/`."""
+
+    def get_completions(
+        self,
+        document: Document,
+        complete_event: CompleteEvent,  # noqa: ARG002 - required by prompt_toolkit protocol
+    ) -> Iterable[Completion]:
+        text = document.text_before_cursor
+        if not text.startswith("/") or any(char.isspace() for char in text):
+            return
+
+        needle = text.lower()
+        for command in SLASH_COMMANDS.values():
+            if command.name.lower().startswith(needle):
+                yield Completion(
+                    command.name,
+                    start_position=-len(text),
+                    display=command.name,
+                    display_meta=command.help_text,
+                )
+
+
+def _build_prompt_session() -> PromptSession[str]:
+    return PromptSession(
+        completer=SlashCommandCompleter(),
+        complete_while_typing=True,
+        history=load_prompt_history(),
+        key_bindings=_build_prompt_key_bindings(),
+        style=_build_prompt_style(),
+    )
+
+
+def _build_slash_completer() -> SlashCommandCompleter:
+    return SlashCommandCompleter()
+
+
+def _build_prompt_key_bindings() -> KeyBindings:
+    bindings = KeyBindings()
+
+    @bindings.add("down", filter=has_completions)
+    def _next_completion(event: object) -> None:
+        event.current_buffer.complete_next()  # type: ignore[attr-defined]
+
+    @bindings.add("up", filter=has_completions)
+    def _previous_completion(event: object) -> None:
+        event.current_buffer.complete_previous()  # type: ignore[attr-defined]
+
+    return bindings
+
+
+def _build_prompt_style() -> Style:
+    return Style.from_dict(
+        {
+            "completion-menu.completion": "#c7c2bd bg:#141210",
+            "completion-menu.completion.current": f"{OPENCLAW_ORANGE} bg:#241913",
+            "completion-menu.meta.completion": "#7f7770 bg:#141210",
+            "completion-menu.meta.completion.current": f"{OPENCLAW_AMBER} bg:#241913",
+            "scrollbar.background": "bg:#141210",
+            "scrollbar.button": "bg:#3a2a22",
+        }
+    )
 
 
 def _run_new_alert(text: str, session: ReplSession, console: Console) -> None:
@@ -53,7 +130,7 @@ async def _run_one_turn(
 ) -> bool:
     """Read one line of input and dispatch. Returns False to exit."""
     try:
-        text = await prompt.prompt_async(ANSI("\x1b[1;36m› \x1b[0m"))
+        text = await prompt.prompt_async(ANSI(f"{PROMPT_ACCENT_ANSI}› {ANSI_RESET}"))
     except (EOFError, KeyboardInterrupt):
         console.print()
         return False
@@ -99,7 +176,7 @@ async def _repl_main(initial_input: str | None = None, config: ReplConfig | None
     console = Console(highlight=False, force_terminal=True, color_system="truecolor")
     render_banner(console)
     session = ReplSession()
-    prompt: PromptSession[str] = PromptSession()
+    prompt = _build_prompt_session()
 
     # Allow a single pre-seeded input for test harnesses
     if initial_input:
