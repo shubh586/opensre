@@ -155,7 +155,7 @@ def _is_anthropic_bedrock_model(model_id: str) -> bool:
       - ``anthropic.claude-*``
       - ``us.anthropic.claude-*``  (cross-region inference profiles)
       - ``arn:aws:bedrock:*:foundation-model/anthropic.claude-*``
-      - ``arn:aws:bedrock:*:application-inference-profile/*`` pointing at Claude
+      - ``arn:aws:bedrock:*:application-inference-profile/*`` (unknown vendor → Converse)
 
     For ARN-based application inference profiles we cannot tell the backing
     foundation model from the ID alone (it may point at Mistral, Llama, etc.).
