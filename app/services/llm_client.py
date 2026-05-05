@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING, Any, Protocol
 if TYPE_CHECKING:
     from app.integrations.llm_cli.registry import CLIProviderRegistration
 
-from anthropic import Anthropic, AnthropicBedrock, AuthenticationError
 import boto3
+from anthropic import Anthropic, AnthropicBedrock, AuthenticationError
 from openai import AuthenticationError as OpenAIAuthError
 from openai import OpenAI
 from pydantic import BaseModel, ValidationError
@@ -157,16 +157,17 @@ def _is_anthropic_bedrock_model(model_id: str) -> bool:
       - ``arn:aws:bedrock:*:foundation-model/anthropic.claude-*``
       - ``arn:aws:bedrock:*:application-inference-profile/*`` pointing at Claude
 
-    For ARN-based application inference profiles we cannot reliably tell the
-    underlying model from the ID alone, so we default to Anthropic (the
-    original behaviour).  Override by setting ``BEDROCK_USE_CONVERSE=1``.
+    For ARN-based application inference profiles we cannot tell the backing
+    foundation model from the ID alone (it may point at Mistral, Llama, etc.).
+    Those ARNs route to the model-agnostic Converse API rather than forcing
+    the Anthropic SDK (which would fail for non-Claude pools).
     """
     model_lower = model_id.lower()
     if "anthropic.claude" in model_lower:
         return True
-    # Application inference profile ARNs — default to Anthropic unless overridden
+    # Application inference profile ARNs encode no vendor — use converse (all models).
     if model_lower.startswith("arn:") and "application-inference-profile" in model_lower:
-        return os.getenv("BEDROCK_USE_CONVERSE", "") != "1"
+        return False
     # Anything else (mistral.*, openai.*, meta.*, etc.) → boto3 converse
     return False
 
@@ -267,15 +268,9 @@ class BedrockLLMClient:
             if system:
                 system = engine.apply(system)
 
-        # Convert to converse API message format
+        # Convert to converse API message format ({ "text": "..." } blocks only).
         converse_messages = [
-            {
-                "role": msg["role"],
-                "content": [{"text": msg["content"]}]
-                if isinstance(msg["content"], str)
-                else msg["content"],
-            }
-            for msg in messages
+            {"role": msg["role"], "content": [{"text": msg["content"]}]} for msg in messages
         ]
 
         kwargs: dict[str, Any] = {
@@ -317,7 +312,15 @@ class BedrockLLMClient:
                 text_parts.append(block["text"])
         content = "\n".join(text_parts).strip()
         if not content:
-            content = str(response)
+            stop_reason = response.get("stopReason")
+            logger.warning(
+                "Bedrock converse returned no text blocks (stopReason=%s); raw response: %s",
+                stop_reason,
+                response,
+            )
+            raise RuntimeError(
+                f"Bedrock converse returned no text content (stopReason={stop_reason!r})"
+            )
         return LLMResponse(content=content)
 
     def invoke(self, prompt_or_messages: Any) -> LLMResponse:
