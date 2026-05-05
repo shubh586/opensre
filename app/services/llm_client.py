@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from app.integrations.llm_cli.registry import CLIProviderRegistration
 
 from anthropic import Anthropic, AnthropicBedrock, AuthenticationError
+import boto3
 from openai import AuthenticationError as OpenAIAuthError
 from openai import OpenAI
 from pydantic import BaseModel, ValidationError
@@ -161,7 +162,7 @@ def _is_anthropic_bedrock_model(model_id: str) -> bool:
     original behaviour).  Override by setting ``BEDROCK_USE_CONVERSE=1``.
     """
     model_lower = model_id.lower()
-    if "anthropic.claude" in model_lower or "anthropic.claude" in model_lower:
+    if "anthropic.claude" in model_lower:
         return True
     # Application inference profile ARNs — default to Anthropic unless overridden
     if model_lower.startswith("arn:") and "application-inference-profile" in model_lower:
@@ -194,8 +195,6 @@ class BedrockLLMClient:
             self._boto3_client: Any = None
         else:
             self._anthropic_client = None
-            import boto3
-
             self._boto3_client = boto3.client("bedrock-runtime", region_name=self._aws_region)
 
     def with_config(self, **_kwargs: Any) -> BedrockLLMClient:
@@ -270,7 +269,13 @@ class BedrockLLMClient:
 
         # Convert to converse API message format
         converse_messages = [
-            {"role": msg["role"], "content": [{"text": msg["content"]}]} for msg in messages
+            {
+                "role": msg["role"],
+                "content": [{"text": msg["content"]}]
+                if isinstance(msg["content"], str)
+                else msg["content"],
+            }
+            for msg in messages
         ]
 
         kwargs: dict[str, Any] = {
