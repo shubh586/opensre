@@ -188,7 +188,9 @@ class BedrockLLMClient:
         self._aws_region = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
 
         if self._use_anthropic:
-            self._anthropic_client: AnthropicBedrock | None = AnthropicBedrock(aws_region=self._aws_region)
+            self._anthropic_client: AnthropicBedrock | None = AnthropicBedrock(
+                aws_region=self._aws_region
+            )
             self._boto3_client: Any = None
         else:
             self._anthropic_client = None
