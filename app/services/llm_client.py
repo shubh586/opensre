@@ -147,16 +147,54 @@ class LLMClient:
         return LLMResponse(content=content)
 
 
+def _is_anthropic_bedrock_model(model_id: str) -> bool:
+    """Return True when *model_id* should be routed through the AnthropicBedrock SDK.
+
+    Anthropic model IDs on Bedrock look like:
+      - ``anthropic.claude-*``
+      - ``us.anthropic.claude-*``  (cross-region inference profiles)
+      - ``arn:aws:bedrock:*:foundation-model/anthropic.claude-*``
+      - ``arn:aws:bedrock:*:application-inference-profile/*`` pointing at Claude
+
+    For ARN-based application inference profiles we cannot reliably tell the
+    underlying model from the ID alone, so we default to Anthropic (the
+    original behaviour).  Override by setting ``BEDROCK_USE_CONVERSE=1``.
+    """
+    model_lower = model_id.lower()
+    if "anthropic.claude" in model_lower or "anthropic.claude" in model_lower:
+        return True
+    # Application inference profile ARNs — default to Anthropic unless overridden
+    if model_lower.startswith("arn:") and "application-inference-profile" in model_lower:
+        return os.getenv("BEDROCK_USE_CONVERSE", "") != "1"
+    # Anything else (mistral.*, openai.*, meta.*, etc.) → boto3 converse
+    return False
+
+
 class BedrockLLMClient:
-    """LLM client using Anthropic models via Amazon Bedrock (IAM auth, no API key)."""
+    """LLM client for Amazon Bedrock (IAM auth, no API key).
+
+    Supports **all** Bedrock models:
+    - Anthropic Claude models → AnthropicBedrock SDK (existing behaviour)
+    - Non-Anthropic models (Mistral, GPT OSS, Llama, etc.) → boto3 ``converse`` API
+    """
 
     def __init__(
         self, *, model: str, max_tokens: int = 1024, temperature: float | None = None
     ) -> None:
-        self._client = AnthropicBedrock(aws_region=os.getenv("AWS_REGION", "us-east-1"))
         self._model = model
         self._max_tokens = max_tokens
         self._temperature = temperature
+        self._use_anthropic = _is_anthropic_bedrock_model(model)
+        self._aws_region = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
+
+        if self._use_anthropic:
+            self._anthropic_client: AnthropicBedrock | None = AnthropicBedrock(aws_region=self._aws_region)
+            self._boto3_client: Any = None
+        else:
+            self._anthropic_client = None
+            import boto3
+
+            self._boto3_client = boto3.client("bedrock-runtime", region_name=self._aws_region)
 
     def with_config(self, **_kwargs: Any) -> BedrockLLMClient:
         return self
@@ -167,7 +205,9 @@ class BedrockLLMClient:
     def bind_tools(self, _tools: list[Any]) -> BedrockLLMClient:
         return self
 
-    def invoke(self, prompt_or_messages: Any) -> LLMResponse:
+    def _invoke_anthropic(self, prompt_or_messages: Any) -> LLMResponse:
+        """Invoke via AnthropicBedrock SDK (Claude models only)."""
+        assert self._anthropic_client is not None
         system, messages = _normalize_messages(prompt_or_messages)
 
         from app.guardrails.engine import GuardrailBlockedError, get_guardrail_engine
@@ -194,7 +234,7 @@ class BedrockLLMClient:
         last_err: Exception | None = None
         for attempt in range(max_attempts):
             try:
-                response = self._client.messages.create(**kwargs)
+                response = self._anthropic_client.messages.create(**kwargs)
                 break
             except GuardrailBlockedError:
                 raise
@@ -211,6 +251,72 @@ class BedrockLLMClient:
 
         content = _extract_text(response)
         return LLMResponse(content=content)
+
+    def _invoke_converse(self, prompt_or_messages: Any) -> LLMResponse:
+        """Invoke via boto3 converse API (works with all Bedrock models)."""
+        assert self._boto3_client is not None
+        system, messages = _normalize_messages(prompt_or_messages)
+
+        from app.guardrails.engine import GuardrailBlockedError, get_guardrail_engine
+
+        engine = get_guardrail_engine()
+        if engine.is_active:
+            for msg in messages:
+                msg["content"] = engine.apply(msg["content"])
+            if system:
+                system = engine.apply(system)
+
+        # Convert to converse API message format
+        converse_messages = [
+            {"role": msg["role"], "content": [{"text": msg["content"]}]} for msg in messages
+        ]
+
+        kwargs: dict[str, Any] = {
+            "modelId": self._model,
+            "messages": converse_messages,
+            "inferenceConfig": {"maxTokens": self._max_tokens},
+        }
+        if system:
+            kwargs["system"] = [{"text": system}]
+        if self._temperature is not None:
+            kwargs["inferenceConfig"]["temperature"] = self._temperature
+
+        backoff_seconds = 1.0
+        max_attempts = 3
+        last_err: Exception | None = None
+        for attempt in range(max_attempts):
+            try:
+                response = self._boto3_client.converse(**kwargs)
+                break
+            except GuardrailBlockedError:
+                raise
+            except Exception as err:
+                last_err = err
+                if attempt == max_attempts - 1:
+                    raise RuntimeError(
+                        f"Bedrock API request failed after {max_attempts} attempts: {type(err).__name__}: {err}"
+                    ) from err
+                time.sleep(backoff_seconds)
+                backoff_seconds *= 2
+        else:
+            raise RuntimeError("Bedrock invocation failed without a concrete error") from last_err
+
+        # Extract text from converse response
+        output_message = response.get("output", {}).get("message", {})
+        content_blocks = output_message.get("content", [])
+        text_parts: list[str] = []
+        for block in content_blocks:
+            if "text" in block:
+                text_parts.append(block["text"])
+        content = "\n".join(text_parts).strip()
+        if not content:
+            content = str(response)
+        return LLMResponse(content=content)
+
+    def invoke(self, prompt_or_messages: Any) -> LLMResponse:
+        if self._use_anthropic:
+            return self._invoke_anthropic(prompt_or_messages)
+        return self._invoke_converse(prompt_or_messages)
 
 
 def _format_anthropic_retry_error(err: Exception) -> str:
