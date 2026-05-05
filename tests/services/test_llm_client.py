@@ -153,7 +153,7 @@ def test_is_anthropic_bedrock_model_application_inference_profile_arn() -> None:
 def test_bedrock_client_routes_mistral_to_converse(monkeypatch) -> None:
     monkeypatch.setattr(
         "app.guardrails.engine.get_guardrail_engine",
-        lambda: _InactiveGuardrailEngine(),
+        _InactiveGuardrailEngine,
     )
     runtime = _RecordingBedrockRuntime(
         {"output": {"message": {"role": "assistant", "content": [{"text": "ok"}]}}},
@@ -177,7 +177,7 @@ def test_bedrock_client_routes_mistral_to_converse(monkeypatch) -> None:
 def test_invoke_converse_includes_optional_system_temperature(monkeypatch) -> None:
     monkeypatch.setattr(
         "app.guardrails.engine.get_guardrail_engine",
-        lambda: _InactiveGuardrailEngine(),
+        _InactiveGuardrailEngine,
     )
     runtime = _RecordingBedrockRuntime(
         {"output": {"message": {"role": "assistant", "content": [{"text": ""}, {"text": "x"}]}}},
@@ -200,7 +200,7 @@ def test_invoke_converse_includes_optional_system_temperature(monkeypatch) -> No
 def test_invoke_converse_raises_when_no_text_blocks(monkeypatch) -> None:
     monkeypatch.setattr(
         "app.guardrails.engine.get_guardrail_engine",
-        lambda: _InactiveGuardrailEngine(),
+        _InactiveGuardrailEngine,
     )
     runtime = _RecordingBedrockRuntime(
         {
@@ -218,7 +218,7 @@ def test_invoke_converse_raises_when_no_text_blocks(monkeypatch) -> None:
 def test_bedrock_application_inference_profile_arn_uses_converse(monkeypatch) -> None:
     monkeypatch.setattr(
         "app.guardrails.engine.get_guardrail_engine",
-        lambda: _InactiveGuardrailEngine(),
+        _InactiveGuardrailEngine,
     )
     runtime = _RecordingBedrockRuntime(
         {"output": {"message": {"role": "assistant", "content": [{"text": "via-converse"}]}}},
