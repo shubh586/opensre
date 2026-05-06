@@ -165,7 +165,8 @@ class TestAssistantOutputRendering:
 
     def test_table_markdown_is_rendered_as_table(self, monkeypatch: Any) -> None:
         markdown = (
-            "| Command | What it does |\n|---|---|\n| `agent` | Launch the interactive shell |\n"
+            "| Command | What it does |\n|---|---|\n"
+            "| `opensre` | Start the interactive shell (TTY) |\n"
         )
         _patch_llm(monkeypatch, markdown)
         session = ReplSession()
@@ -178,7 +179,7 @@ class TestAssistantOutputRendering:
         # so the text is what matters here, not the exact column dividers).
         assert "Command" in output
         assert "What it does" in output
-        assert "agent" in output
+        assert "opensre" in output
 
     def test_response_is_recorded_in_session_history(self, monkeypatch: Any) -> None:
         _patch_llm(monkeypatch, "Sure thing.")
