@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-import httpx
-
 from app.cli.commands import doctor
 
 
@@ -233,35 +231,3 @@ def test_check_version_freshness_soft_fails_on_fetch_error(monkeypatch) -> None:
 
     assert ok is True
     assert detail == "1.2.3 (could not check: rate limited)"
-
-
-def test_check_network_success(monkeypatch) -> None:
-    calls: list[tuple[str, int]] = []
-
-    class _Response:
-        status_code = 200
-
-    def _fake_get(url: str, timeout: int) -> _Response:
-        calls.append((url, timeout))
-        return _Response()
-
-    monkeypatch.setattr(httpx, "get", _fake_get)
-
-    ok, detail = doctor._check_network()
-
-    assert ok is True
-    assert detail == "github.com reachable (HTTP 200)"
-    assert calls == [("https://api.github.com", 5)]
-
-
-def test_check_network_connect_error(monkeypatch) -> None:
-    def _raise(url: str, timeout: int) -> None:
-        raise httpx.ConnectError("boom")
-
-    monkeypatch.setattr(httpx, "get", _raise)
-
-    ok, detail = doctor._check_network()
-
-    assert ok is False
-    assert "github.com unreachable" in detail
-    assert "boom" in detail

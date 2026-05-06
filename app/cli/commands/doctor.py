@@ -103,23 +103,12 @@ def _check_version_freshness() -> tuple[bool, str]:
         return True, f"{current} (could not check: {exc})"
 
 
-def _check_network() -> tuple[bool, str]:
-    import httpx
-
-    try:
-        resp = httpx.get("https://api.github.com", timeout=5)
-        return True, f"github.com reachable (HTTP {resp.status_code})"
-    except Exception as exc:  # noqa: BLE001
-        return False, f"github.com unreachable: {exc}"
-
-
 _CHECKS = [
     ("python", _check_python_version),
     ("env_file", _check_env_file),
     ("llm_provider", _check_llm_provider),
     ("integrations", _check_integrations),
     ("version", _check_version_freshness),
-    ("network", _check_network),
 ]
 
 _STATUS_SYMBOLS = {
