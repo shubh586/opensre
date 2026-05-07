@@ -2,9 +2,9 @@
 
 ## Build and Run commands
 
-- Build `make install` (creates `.venv` via `uv sync` and installs this repo in editable mode)
+- Build `make install` (sets up the project environment via `uv sync` and installs this repo in editable mode)
 - Run **`uv run opensre …`** from the repo root while developing — preferred approach, uses this checkout even if another `opensre` is on your `PATH`.
-- Use **`uv run python …`** for any Python commands instead of activating the virtualenv manually.
+- Use **`uv run python …`** for any Python commands.
 
 ## Lint & Format
 
