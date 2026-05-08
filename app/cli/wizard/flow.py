@@ -578,10 +578,15 @@ def _render_integration_result(
 
 def _configure_grafana() -> tuple[str, str]:
     _, credentials = _integration_defaults("grafana")
+    saved_endpoint = _string_value(credentials.get("endpoint"))
+    # Don't pre-fill a localhost URL — it's a local dev default, not a real instance.
+    endpoint_default = (
+        saved_endpoint if saved_endpoint and "localhost" not in saved_endpoint else ""
+    )
     while True:
         endpoint = _prompt_value(
             "Grafana instance URL",
-            default=_string_value(credentials.get("endpoint")),
+            default=endpoint_default,
         )
         api_key = _prompt_value(
             "Grafana service account token",
