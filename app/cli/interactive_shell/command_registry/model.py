@@ -385,6 +385,11 @@ def _interactive_set_toolcall(console: Console) -> bool | None:
     if model_value == "__match_reasoning__":
         reasoning = (os.getenv(provider.model_env, "") or "").strip() or provider.default_model
         return switch_toolcall_model(reasoning, console, provider_name=provider.value)
+    if model_value == "__custom__":
+        custom_tc = _prompt_custom_model_id(console)
+        if custom_tc is None:
+            return None
+        model_value = custom_tc
     return switch_toolcall_model(str(model_value), console, provider_name=provider.value)
 
 
