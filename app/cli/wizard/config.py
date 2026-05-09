@@ -24,7 +24,7 @@ from app.integrations.llm_cli.base import LLMCLIAdapter
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PROJECT_ENV_PATH = Path(os.getenv("OPENSRE_PROJECT_ENV_PATH", PROJECT_ROOT / ".env"))
 
-CredentialKind = Literal["api_key", "host", "cli"]
+CredentialKind = Literal["api_key", "host", "cli", "none"]
 
 
 @dataclass(frozen=True)
@@ -400,7 +400,7 @@ SUPPORTED_PROVIDERS = (
         toolcall_model_env="BEDROCK_TOOLCALL_MODEL",
         credential_label="AWS region (uses IAM credentials)",
         credential_secret=False,
-        credential_kind="host",
+        credential_kind="none",
         credential_default="us-east-1",
     ),
     ProviderOption(
