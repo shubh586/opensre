@@ -19,7 +19,15 @@ if TYPE_CHECKING:
     from app.integrations.llm_cli.registry import CLIProviderRegistration
 
 import boto3
-from anthropic import Anthropic, AnthropicBedrock, AuthenticationError, NotFoundError
+import botocore.exceptions
+from anthropic import (
+    Anthropic,
+    AnthropicBedrock,
+    AuthenticationError,
+    BadRequestError,
+    NotFoundError,
+    PermissionDeniedError,
+)
 from openai import AuthenticationError as OpenAIAuthError
 from openai import NotFoundError as OpenAINotFoundError
 from openai import OpenAI
@@ -77,6 +85,16 @@ _RETRY_MAX_ATTEMPTS = 3
 # generations (Opus, GPT-5) headroom while preventing indefinite hangs on
 # silent network drops.
 _CLIENT_TIMEOUT_SEC = 60.0
+
+# Bedrock boto3 error codes that must not be retried (invalid config, no access).
+_BEDROCK_NON_RETRYABLE_CODES = frozenset(
+    {
+        "ValidationException",
+        "AccessDeniedException",
+        "ResourceNotFoundException",
+        "UnauthorizedException",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -325,6 +343,15 @@ class BedrockLLMClient:
                 break
             except GuardrailBlockedError:
                 raise
+            except (
+                AuthenticationError,
+                BadRequestError,
+                PermissionDeniedError,
+                NotFoundError,
+            ) as err:
+                raise RuntimeError(
+                    f"Bedrock API request failed: {type(err).__name__}: {err}"
+                ) from err
             except Exception as err:
                 last_err = err
                 if attempt == max_attempts - 1:
@@ -378,6 +405,12 @@ class BedrockLLMClient:
             except GuardrailBlockedError:
                 raise
             except Exception as err:
+                if isinstance(err, botocore.exceptions.ClientError):
+                    code = err.response.get("Error", {}).get("Code", "")
+                    if code in _BEDROCK_NON_RETRYABLE_CODES:
+                        raise RuntimeError(
+                            f"Bedrock API request failed: {type(err).__name__}: {err}"
+                        ) from err
                 last_err = err
                 if attempt == max_attempts - 1:
                     raise RuntimeError(
