@@ -192,3 +192,72 @@ class TestBedrockProviderConfig:
 
         provider = PROVIDER_BY_VALUE["bedrock"]
         assert provider.toolcall_model_env == "BEDROCK_TOOLCALL_MODEL"
+
+    def test_bedrock_api_key_env_is_empty(self) -> None:
+        """api_key_env="" is intentional — Bedrock uses IAM auth, not an API key."""
+        from app.cli.wizard.config import PROVIDER_BY_VALUE
+
+        provider = PROVIDER_BY_VALUE["bedrock"]
+        assert provider.api_key_env == ""
+        # Empty string must be falsy so downstream ``bool(provider.api_key_env)``
+        # checks correctly skip API-key validation for Bedrock.
+        assert not provider.api_key_env
+
+    def test_bedrock_no_credential_default(self) -> None:
+        """credential_default must use the dataclass default (empty string).
+
+        Region is picked up from AWS_DEFAULT_REGION / ~/.aws/config, not from
+        the wizard credential prompt (which is skipped for credential_kind="none").
+        """
+        from app.cli.wizard.config import PROVIDER_BY_VALUE
+
+        provider = PROVIDER_BY_VALUE["bedrock"]
+        assert provider.credential_default == ""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# _interactive_set_toolcall + __custom__ integration
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class TestInteractiveSetToolcallCustom:
+    """Verify the __custom__ branch inside _interactive_set_toolcall wires through correctly."""
+
+    def test_custom_toolcall_calls_switch_with_typed_id(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Selecting __custom__ in toolcall menu should prompt and call switch_toolcall_model."""
+        from unittest.mock import patch
+
+        from rich.console import Console
+
+        from app.cli.interactive_shell.command_registry import model as model_mod
+
+        console = Console(force_terminal=False)
+        custom_id = "eu.anthropic.claude-sonnet-4-6"
+
+        # First call: pick provider "bedrock"; second call: pick "__custom__"
+        choose_returns = iter(["bedrock", "__custom__"])
+        monkeypatch.setattr(model_mod, "repl_choose_one", lambda **_kw: next(choose_returns))
+        monkeypatch.setattr(model_mod, "_prompt_custom_model_id", lambda _c: custom_id)
+
+        with patch.object(model_mod, "switch_toolcall_model", return_value=True) as mock_switch:
+            result = model_mod._interactive_set_toolcall(console)
+
+        assert result is True
+        mock_switch.assert_called_once_with(custom_id, console, provider_name="bedrock")
+
+    def test_custom_toolcall_returns_none_on_cancel(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """If user cancels the custom prompt, _interactive_set_toolcall returns None."""
+        from rich.console import Console
+
+        from app.cli.interactive_shell.command_registry import model as model_mod
+
+        console = Console(force_terminal=False)
+
+        choose_returns = iter(["bedrock", "__custom__"])
+        monkeypatch.setattr(model_mod, "repl_choose_one", lambda **_kw: next(choose_returns))
+        monkeypatch.setattr(model_mod, "_prompt_custom_model_id", lambda _c: None)
+
+        result = model_mod._interactive_set_toolcall(console)
+        assert result is None

@@ -393,6 +393,10 @@ SUPPORTED_PROVIDERS = (
         value="bedrock",
         label="Amazon Bedrock (IAM auth)",
         group="Hosted providers",
+        # Intentionally empty: Bedrock authenticates via the IAM credential
+        # chain (env, ~/.aws/credentials, instance profile) — no API key to
+        # prompt for.  Empty string is safe: every downstream check uses
+        # ``bool(provider.api_key_env)`` or ``.get()`` (never subscript).
         api_key_env="",
         model_env="BEDROCK_REASONING_MODEL",
         default_model=BEDROCK_REASONING_MODEL,
@@ -400,8 +404,9 @@ SUPPORTED_PROVIDERS = (
         toolcall_model_env="BEDROCK_TOOLCALL_MODEL",
         credential_label="AWS region (uses IAM credentials)",
         credential_secret=False,
+        # credential_kind="none" causes flow.py to skip the credential prompt
+        # entirely.  Region is picked up from AWS_DEFAULT_REGION / ~/.aws/config.
         credential_kind="none",
-        credential_default="us-east-1",
     ),
     ProviderOption(
         value="codex",
